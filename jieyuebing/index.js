@@ -48,14 +48,14 @@ function Player(cxt){
         currentY = this.top,
         move = false
 
-    stage.addEventListener(gameMonitor.eventType.start, ()=>{
+    stage.addEventListener(gameMonitor.eventType.start, (event)=>{
       this.setPosition(event);
       move = true;
     })
-    stage.addEventListener(gameMonitor.eventType.end, ()=>{
+    stage.addEventListener(gameMonitor.eventType.end, (event)=>{
       move = false;
     })
-    stage.addEventListener(gameMonitor.eventType.move, ()=>{
+    stage.addEventListener(gameMonitor.eventType.move, (event)=>{
       event.preventDefault();
       if(move){
         this.setPosition(event);
@@ -73,14 +73,15 @@ function Player(cxt){
         if(l3 <= this.height/2 + f.height/2){
           foodList[f.id] = null;
           if(f.type == 0){
-            gameMonitor.stop();
+            gameMonitor.stop(cxt);
             console.log('结束！');
             setTimeout(function(){
 
             },2000)
           }else{
             var score = document.getElementById('score');
-            score.innerHTML = gameMonitor.score + f.score;
+            gameMonitor.score += f.score;
+            score.innerHTML = gameMonitor.score;
           }
         }
 
@@ -100,6 +101,7 @@ function Food(type, left, id){
   this.top = -50;
   this.speed = 0.04 * Math.pow(1.2, Math.floor(gameMonitor.time/this.speedUpTime));
 	this.loop = 0;
+  this.score = 0;
   this.foodList = [
     {
       type: 0,
@@ -116,6 +118,7 @@ function Food(type, left, id){
     var item = this.foodList[i];
     if(item.type == type){
       p = item;
+      this.score = item.score;
       this.pic = gameMonitor.im.createImage(p.img);
     }
   }
@@ -178,6 +181,7 @@ var gameMonitor = {
   foodList: [],
   bgDistance: 0,//背景当前位置
   player: null,
+  isStop: false,
   eventType: {
     start: 'touchstart',
     move: 'touchmove',
@@ -209,9 +213,18 @@ var gameMonitor = {
     cxt.drawImage(this.bg, 0, this.bgDistance, this.bgWidth, this.bgHeight);
   },
   stop: function(cxt){
+
     clearTimeout(this.timmer);
+    this.isStop = true;
+
+    var endImg = this.im.createImage('imgs/endpage.jpg');
+    this.im.loadImage(['imgs/endpage.jpg'])
+    document.getElementsByClassName('result')[0].style.display = 'block'
   },
   run: function(cxt){
+    if(this.isStop){
+      return;
+    }
     cxt.clearRect(0, 0, this.bgWidth, this.bgHeight);
 
     this.rollBg(cxt);
@@ -234,6 +247,17 @@ var gameMonitor = {
     if(this.time>2500)
       return;
     this.time++;
+  },
+
+  reset: function(){
+    this.time = 0;
+    this.timmer = null;
+    this.bgSpeed = 2;
+    this.bgloop = 0;
+    this.score = 0;
+    this.foodList = [];
+    this.isStop = false;
+    document.getElementById('score').innerHTML = 0;
   },
   isMobile: function(){
     var sUserAgent = navigator.userAgent.toLowerCase(),
@@ -269,3 +293,6 @@ if(!gameMonitor.isMobile()){
 }
 
 gameMonitor.init();
+setTimeout(function(){
+  gameMonitor.stop();
+},60000)
